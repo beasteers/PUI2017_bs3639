@@ -1,14 +1,11 @@
- # Homework 1
+# Homework 1
 
 ## Assignment 1: Lab 1
 Here are the relevant links for Lab 1.
 
-[my Github](https://github.com/bensteers/)
-
-[my gittest repo](https://github.com/bensteers/gittest_bs3639)
-
-[neighbor’s gittest repo](https://github.com/yixuantang/yixuantang/)
-
+[my Github](https://github.com/bensteers/), 
+[my gittest repo](https://github.com/bensteers/gittest_bs3639), 
+[neighbor’s gittest repo](https://github.com/yixuantang/yixuantang/), and 
 [my fork](https://github.com/bensteers/yixuantang/)
 
 ## Assignment 2: Setup environment
