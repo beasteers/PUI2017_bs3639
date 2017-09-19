@@ -6,7 +6,15 @@ Here are the relevant links for Lab 1.
 [my Github](https://github.com/bensteers/), 
 [my gittest repo](https://github.com/bensteers/gittest_bs3639), 
 [neighbor’s gittest repo](https://github.com/yixuantang/yixuantang/), and 
-[my fork](https://github.com/bensteers/yixuantang/)
+[my fork](https://github.com/bensteers/yixuantang/).
+
+I didn't receive any pull requests, but I created:
+ * a branch
+ * a conflict
+ * a pull request
+ * then merged with the master branch
+ 
+ so hopefully that is sufficient.
 
 ## Assignment 2: Setup environment
 This is a screenshot of my .bash_profile showing the requested alias/export declarations.
@@ -21,4 +29,4 @@ This is the bash output for the alias/export test commands.
 
 ## Assignment 3: Reproducible research
 
-The Jupyter notebook can be found here: [Assignment 3](./HW1_3.ipynb)
+The Jupyter notebook for assignment 3 can be found here: [Assignment 3](./HW1_3.ipynb)
