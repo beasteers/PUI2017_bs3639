@@ -49,11 +49,11 @@ The [MTA docs](http://bustime.mta.info/wiki/Developers/SIRIMonitoredVehicleJourn
 The file can be found [here](get_bus_info_bs3639.py).
 
 ## Assignment 3
-The purpose of this assignment is to display data from the CUSP data facility in both tabular and graphical format. The data source used is NYC Department of Education Job Titles, accessible via the slug, `[s7yj-m732/1414245680s7yj-m732](http://urbanprofiler.cloudapp.net/dataset/s7yj-m732/)`. 
+The purpose of this assignment is to display data from the CUSP data facility in both tabular and graphical format. The data source used is NYC Department of Education Job Titles, accessible via the slug, [`s7yj-m732/1414245680s7yj-m732`](http://urbanprofiler.cloudapp.net/dataset/s7yj-m732/). 
 
 The notebook can be found [here](HW2_A3.ipynb).
 
 ## Extra Credit
-The purpose of this assignment was to do the same thing as Assignment 3, but handle datetime objects. The data source used is the 2005 Campaign Expenditures. The slug for the data source is `[kwmq-dbub/1414245703/kwmq-dbub](http://urbanprofiler.cloudapp.net/dataset/easq-ubfe/)`.
+The purpose of this assignment was to do the same thing as Assignment 3, but handle datetime objects. The data source used is the 2005 Campaign Expenditures. The slug for the data source is [`kwmq-dbub/1414245703/kwmq-dbub`](http://urbanprofiler.cloudapp.net/dataset/easq-ubfe/).
 
 The notebook can be found [here](HW2_Extra_Credit.ipynb).
