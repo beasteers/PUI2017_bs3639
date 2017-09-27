@@ -29,3 +29,4 @@ Ho: There is no correlation between the distribution of diabetes and the lack of
 
 
 This is not a lab experiment, but you have data the incidence of diabetes for the US population.
+
