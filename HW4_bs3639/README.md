@@ -4,7 +4,7 @@ Peer review of Anupama Santhosh's [Cikibike assignment](https://github.com/benst
 
 
 ## Assignment 2: Literature choices of statistical tests.
-Analyse 3 statistical tests from articles found in [PLOS ONE](http://journals.plos.org/plosone/). List their variables and types along with the hypothesis, research question, and statistical significance level.
+Analyse 3 statistical tests from articles found in [PLOS ONE](http://journals.plos.org/plosone/). List their variables and types along with the hypothesis, research question, and statistical significance level. I worked alone on this assignment.
 
 | **Statistical Analyses	|  IV(s)  |  IV type(s) |  DV(s)  |  DV type(s)  |  Control Var | Control Var type  | Question to be answered | _H0_ | alpha | link to paper **| 
 |:----------:|:----------|:------------|:-------------|:-------------|:------------|:------------- |:------------------|:----:|:-------:|:-------|
@@ -15,39 +15,17 @@ Logistic Regression |AUC|1, continuous|various classifiers|5, categorical|||Does
 
 
 ## Assignment 3: Reproduce the analysis of the Hard to Employ program in NY.
-Reproduce the analysis of the Hard to Employ programs for NY. You may want to read the relevant portion of the study to make sure you are not just workign mechanically (Chapter 2 of the original document).
-
-Reproduce the results in cell 2 of Table 2.1 (Ever employed in a CEO transitional job), and cell 10 (Convicted of a felony). Fill in the cells of the scheleton notebook as you are asked to.
-
-Turn in your version of the python notebook in the HW4_<netID> directory
-
-Grading
-
-All cells that are marked "for you to do" (or similar...) and that contain missing values should be filled.
-
-The second null hypothesis should be stated (for the "Convicted of a felony after 3 years" data).
-
-Both tests, Z and chi-sq, should be completed for the "Convicted of a felony after 3 years" data.
-
-The result of the test in term the rejection of the Null should be stated in all cases (for both tests and both for the original "Ever employed in a CEO transitional job" data and the "Convicted of a felony after 3 years data").
+Reproduce the analysis of the Hard to Employ programs for NY. I worked alone on this assignment.
 
 
 ## Assignment 4: Tests of correlation using the scipy package with citibike data.
-Use the following are 3 tests to assess correlation between 2 samples of citibike data:
-
-Pearson’s test
-Spearman’s test
-K-S test
-There is a skeleton notebook that works on a similar question, age of male vs female riders. Follow it to see how to set up the assignment notebook citibikes_compare_distributions.ipynb.
+Used the following are 3 tests to assess correlation between 2 samples of citibike data:
+* K-S test
+* Pearson’s test
+* Spearman’s test
 
 Use: trip duration of bikers that ride during the day vs night. State your result in words in terms of the Null Hypothesis
 
 Use: age of bikers for trips originating in Manhattan and in Brooklyn. Use at least 2 months of citibike data. The citibike data can be accessed from the citibike website - make sure you do it in a reproducible way, or in the CUSP data facility at the path /gws/open/Student/citibike
 
-Grading
-
-A notebook should be completed as the cell by cell instructions indicate.
-
-You must state the Null Hypothesis, according to what you know about the test and the scipy.stats package documentation for three scipy.stats function, corresponding to the three tests.
-
-You must put the caluclated statistics and the p-value in the context of null hypothesis rejection in each case.
+I worked alone on this assignment.
