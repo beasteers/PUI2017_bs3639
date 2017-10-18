@@ -11,9 +11,4 @@ Test that binomial and Poisson distributions look increasingly more similar to G
 ## Assignment 3: US has a problem...
 investigate linear relationships between fire arm possession, homicides by fire arms, and mass shootings for different countries.
 
-I worked with Emily Padvorac, Dana Reshef, and Becky Scheidegger on this assignment.
-
-Follow instructions in [this skeleton notebook](https://github.com/fedhere/PUI2017_fb55/blob/master/HW5_fb55/Assignment3_instructionsUpdated.ipynb)
-
-### Grading 
-Usual grading scheme applies. Remember that succesfully fitting a line to data is not sufficient. Comment on what conclusions can be drawn from your analysis (and don't jump to conclusions!)
+I worked with Emily Padvorac, Dana Reshef, and Becky Scheidegger on this assignment. We worked on our own, but discussed when we had questions.
