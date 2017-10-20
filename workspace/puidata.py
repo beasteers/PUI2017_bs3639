@@ -42,7 +42,7 @@ class DataLoader(object):
         '''
         Arguments:
             url (str, optional): The url to pull from. Can be specified in later.
-            filename (str, optional): The filename to save the cache file to. Also 
+            filename (str, optional): The filename to save the cache file to. Also used to select a file from a zip archive
             sheets (list, optional): A list of sheet names to get when calling `from_xlsx`
         '''
         self.clear()
@@ -106,11 +106,11 @@ class DataLoader(object):
 
 
     def cfrom_csv(self, *a, **kw):
-        ''''''
+        '''Helper to load csv checking and saving to cache. See `from_csv`'''
         return self.from_cache().from_csv(*a, **kw).save_cache()
 
     def cfrom_xlsx(self, *a, **kw):
-        ''''''
+        '''Helper to load xlsx checking and saving to cache. See `from_csv`'''
         return self.from_cache().from_xlsx(*a, **kw).save_cache()
 
 
@@ -203,6 +203,9 @@ class DataLoader(object):
     def has_df(self):
         '''for making sure there's a df'''
         return len(self.dfs) or self.df is not None
+
+
+
 
 
 
