@@ -110,7 +110,7 @@ class DataLoader(object):
         return self.from_cache().from_csv(*a, **kw).save_cache()
 
     def cfrom_xlsx(self, *a, **kw):
-        '''Helper to load xlsx checking and saving to cache. See `from_csv`'''
+        '''Helper to load xlsx checking and saving to cache. See `from_xlsx`'''
         return self.from_cache().from_xlsx(*a, **kw).save_cache()
 
 
