@@ -1,6 +1,7 @@
 from __future__ import print_function
 import io
 import os
+import sys
 import glob
 import zipfile
 
@@ -37,6 +38,7 @@ class BaseLoader(object):
     envvar = 'PUIDATA'
     default_dir = './'
     extension = ''
+    directory = os.getenv(envvar, default_dir)
 
     def __init__(self, filename=None, url=None):
         '''
@@ -55,18 +57,19 @@ class BaseLoader(object):
             self.filename = parts[0] + self.extension
 
 
+
     @abstractmethod
     def load(self, url=None, filename=None, is_zip=False, ith=0, **kw):
         '''Loads data from url'''
         return self
 
     @abstractmethod
-    def _read(self, *a, **kw):
+    def read(self, *a, **kw):
         '''Loads the data from file'''
         pass
 
     @abstractmethod
-    def _save(self, *a, **kw):
+    def save(self, *a, **kw):
         '''Saves the data to file'''
         pass
 
@@ -81,7 +84,7 @@ class BaseLoader(object):
         '''
         if self.is_cached(filename):
             print('Loaded from cache:', self.local_file(filename))
-            self._read(self.local_file(filename), **kw)
+            self.read(self.local_file(filename), **kw)
         return self
 
     def save_cache(self, filename=None, overwrite=False, **kw):
@@ -96,14 +99,14 @@ class BaseLoader(object):
         if (overwrite or not self.is_cached()) and self.has_df():
             print('Saving to cache:', self.local_file(filename))
             BaseLoader.ensure_directory(self, filename)
-            self._save(self.local_file(filename), **kw)
+            self.save(self.local_file(filename), **kw)
         return self
 
 
 
-    def cload(self, *a, **kw):
+    def cload(cls, *a, **kw):
         '''Helper to load csv checking and saving to cache. See `from_csv`'''
-        return self.from_cache().load(*a, **kw).save_cache()
+        return cls().from_cache().load(*a, **kw).save_cache()
 
 
 
@@ -130,10 +133,10 @@ class BaseLoader(object):
         '''Create a file buffer from a url or path'''
         self.url = url or self.url or self.local_file()
         try: # assume is url
-            # socket = urllib.urlopen(self.url)
+            socket = urllib.urlopen(self.url)
             # socket = requests.get(self.url)
-            socket = urllib.urlopen(urllib.Request(self.url, headers={ 'User-Agent': 'Mozilla/5.0' }))
-        except AttributeError:#ValueError: # is local
+            # socket = urllib.urlopen(urllib.Request(self.url, headers={ 'User-Agent': 'Mozilla/5.0' }))
+        except ValueError:#ValueError: # is local
             socket = open(self.url, 'rb' if as_b else 'r')
         return socket
 
@@ -167,9 +170,21 @@ class BaseLoader(object):
         '''Whether or not there is a df or a list of dfs available'''
         return len(self.dfs) or self.df is not None
 
-    @staticmethod
-    def list_cache(self, subdir=''):
-        return glob.glob(os.path.join(self.directory, subdir, '*' + self.extension))
+    def set_df(self, df):
+        '''Assign df or multiple dfs'''
+        if isinstance(df, pd.DataFrame):
+            self.df = df
+        else: # Assumed to be an ordered dict, dict, or list. TODO: add check
+            self.dfs = df
+        return self
+
+    @classmethod
+    def list_cache(cls, subdir='', ext=None, full_path=False):
+        directory = os.getenv(cls.envvar, cls.default_dir)
+        files = glob.glob(os.path.join(
+            directory, subdir or '', '*' + (ext if ext is not None else cls.extension)
+        ))
+        return files if full_path else [os.path.relpath(f, directory) for f in files]
 
 
 
@@ -177,6 +192,7 @@ class BaseLoader(object):
 
 
 class csvLoader(BaseLoader):
+    extension = '.csv'
     '''
     # All equivalent:
 
@@ -214,15 +230,15 @@ class csvLoader(BaseLoader):
             return self
 
         socket = self.open_socket(url, filename, is_zip)
-        self._read(socket, **kw)
+        self.read(socket, **kw)
         return self
 
-    def _read(self, file, **kw):
+    def read(self, file, **kw):
         '''Loads dataframe from file or file-like object'''
         self.df = pd.read_csv(file, **kw)
 
 
-    def _save(self, file, **kw):
+    def save(self, file, **kw):
         '''Saves file to location'''
         self.df.to_csv(file, index=False, **kw)
 
@@ -230,6 +246,8 @@ class csvLoader(BaseLoader):
 
 
 class xlsxLoader(BaseLoader):
+    extension = '.xlsx'
+
     def __init__(self, filename=None, url=None, sheets=None):
         BaseLoader.__init__(self, filename, url)
         self.sheets = sheets
@@ -254,16 +272,23 @@ class xlsxLoader(BaseLoader):
             return self
 
         socket = self.open_socket(url, filename, is_zip=is_zip, ith=ith, as_b=True)
-        self._read(socket, sheets=sheets, **kw)
+        self.read(socket, sheets=sheets, **kw)
         return self
 
+    def load_sheet(self, sheet, *a, **kw):
+        ''''''
+        self.sheet_name = sheet
+        self.load(*a, **kw)
+        if self.dfs.get(sheet):
+            self.df = self.dfs.get(sheet)
+        return self
 
-    def _read(self, file, sheets=None, **kw):
+    def read(self, file, sheets=None, **kw):
         reader = pd.ExcelFile(file)
         sheets = sheets or self.sheets or reader.sheet_names
         self.dfs = odict([(sh, pd.read_excel(reader, sheetname=sh, **kw)) for sh in sheets])
 
-    def _save(self, file, **kw):
+    def save(self, file, **kw):
         # Write xlsx file
         writer = pd.ExcelWriter(file)
         for name, df in self.dfs.items():
@@ -274,6 +299,7 @@ class xlsxLoader(BaseLoader):
 
 
 class shpLoader(BaseLoader):
+    extension = '.shp'
 
     def __init__(self, filename=None, url=None, basename=None):
         BaseLoader.__init__(self, filename, url)
@@ -313,13 +339,13 @@ class shpLoader(BaseLoader):
 
         z = self.open_zip(url)
         z.extractall(self.local_file(self.basename))
-        self._read(self.local_file(filename), **kw)
+        self.read(self.local_file(filename), **kw)
         return self
 
-    def _read(self, file, **kw):
+    def read(self, file, **kw):
         self.df = gpd.GeoDataFrame.from_file(file, **kw)
 
-    def _save(self, file, **kw):
+    def save(self, file, **kw):
         '''asdfkasjfklsajfkljsalkjaslfkjsakldf'''
         pass
 
@@ -334,57 +360,66 @@ class shpLoader(BaseLoader):
 
 if __name__ == '__main__':
 
-    # z = zipfile.ZipFile(io.BytesIO( urllib.urlopen('https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip').read() ))
-    # df = gpd.GeoDataFrame.from_file(z.open('MNMapPLUTO.shp'))
-    # print(df.head())
-
-    # Running tests on assignment 5 data
-
-    BaseLoader.envvar = 'adkfasdkjfhkdsjfhasfasfdasdf44444' # force to go into current directory (unless you have a variable named this...)
-    BaseLoader.default_dir = './data' # save to data folder
-
-
-    dl = shpLoader(
-        url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
-    ).from_cache().load()
-
-    print(dl.has_df())
-
-    dl = csvLoader(
-        url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv'
-    ).from_cache().load(is_zip=True, skiprows=3).save_cache()
-
-    print(dl.has_df())
     
+    if sys.argv[1] == 'list':
+        def disp_cache_list(dl, subdir=''):
+            print('{}: {}'.format(dl.extension, os.path.join(subdir or '', '*' + dl.extension)))
+            for f in dl.list_cache(subdir): 
+                print('  ', f)
 
-    dl = csvLoader(
-        url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv', filename='asdfasdfdata-pvLFI.csv'
-    ).cload()
-
-    print(dl.has_df())
-
-    dl = csvLoader(
-        url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv'
-    ).from_cache().load().save_cache()
-
-    print(dl.has_df())
+        disp_cache_list(csvLoader)
+        disp_cache_list(xlsxLoader)
+        disp_cache_list(shpLoader, '*')
 
 
-    dl = xlsxLoader(filename='vlah.xlsx').from_cache().load(
-        'Team assignments and Weekly Innovation Update group (1).xlsx'
-    ).save_cache()
 
-    print(dl.has_df())
 
-    dl = xlsxLoader(filename='vlah1.xlsx').cload(
-        'Team assignments and Weekly Innovation Update group (1).xlsx'
-    )
 
-    print(dl.has_df())
+    if sys.argv[1] == 'test':
+        # Running tests on assignment 5 data
 
-    dl = csvLoader(filename='balhah.csv').from_cache().load(
-        'World firearms murders and ownership - Sheet 1.zip', is_zip=True
-    ).save_cache()
+        BaseLoader.envvar = 'adkfasdkjfhkdsjfhasfasfdasdf44444' # force to go into current directory (unless you have a variable named this...)
+        BaseLoader.default_dir = './data' # save to data folder
 
-    print(dl.has_df())
+        print('Testing shapefile...')
+        dl = shpLoader(
+            url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
+        ).from_cache().load()
+
+        print(dl.has_df())
+
+        print('Testing zipped csv...')
+        dl = csvLoader(
+            url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv'
+        ).from_cache().load(is_zip=True, skiprows=3).save_cache()
+
+        print(dl.has_df())
+
+        print('Testing csv...')
+        dl = csvLoader(
+            url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv'
+        ).from_cache().load().save_cache()
+
+        print(dl.has_df())
+
+        print('Testing csv (custom filename)...')
+        dl = csvLoader(
+            url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv', filename='asdfasdfdata-pvLFI.csv'
+        ).cload()
+
+        print(dl.has_df())
+
+        print('Testing local zipped csv...')
+        dl = csvLoader(filename='balhah.csv').from_cache().load(
+            'World firearms murders and ownership - Sheet 1.zip', is_zip=True
+        ).save_cache()
+
+        print(dl.has_df())
+
+        print('Testing xlsx...')
+        dl = xlsxLoader(filename='vlah.xlsx').from_cache().load(
+            'Team assignments and Weekly Innovation Update group (1).xlsx'
+        ).save_cache()
+
+        print(dl.has_df())
 
