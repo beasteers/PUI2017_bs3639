@@ -59,7 +59,7 @@ class BaseLoader(object):
 
 
     @abstractmethod
-    def load(self, url=None, filename=None, is_zip=False, ith=0, **kw):
+    def download(self, url=None, filename=None, is_zip=False, ith=0, **kw):
         '''Loads data from url'''
         return self
 
@@ -104,9 +104,9 @@ class BaseLoader(object):
 
 
 
-    def cload(cls, *a, **kw):
+    def load(self, *a, **kw):
         '''Helper to load csv checking and saving to cache. See `from_csv`'''
-        return cls().from_cache().load(*a, **kw).save_cache()
+        return self.from_cache().download(*a, **kw).save_cache()
 
 
 
@@ -198,21 +198,21 @@ class csvLoader(BaseLoader):
 
     df = csvLoader(
         url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv'
-    ).from_cache().load(is_zip=True, skiprows=3).save_cache().df
+    ).from_cache().download(is_zip=True, skiprows=3).save_cache().df
 
     # or
     df = csvLoader(
         url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv', filename='asdfasdfdata-pvLFI.csv'
-    ).cload().df
+    ).load().df
 
     # or
     df = csvLoader(
         filename='asdfasdfdata-pvLFI.csv'
-    ).cload(url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv').df
+    ).load(url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv').df
 
 
     '''
-    def load(self, url=None, filename=None, is_zip=False, ith=0, **kw):
+    def download(self, url=None, filename=None, is_zip=False, ith=0, **kw):
         '''Load csv from either url or file
         Assigns the dataframe to `self.df`
 
@@ -253,7 +253,7 @@ class xlsxLoader(BaseLoader):
         self.sheets = sheets
 
 
-    def load(self, url=None, filename=None, is_zip=False, ith=0, sheets=None, **kw):
+    def download(self, url=None, filename=None, is_zip=False, ith=0, sheets=None, **kw):
         '''Load xlsx from either url or file
         Assigns an ordered dict of dataframes to `self.dfs`
 
@@ -278,7 +278,7 @@ class xlsxLoader(BaseLoader):
     def load_sheet(self, sheet, *a, **kw):
         ''''''
         self.sheet_name = sheet
-        self.load(*a, **kw)
+        self.download(*a, **kw)
         if self.dfs.get(sheet):
             self.df = self.dfs.get(sheet)
         return self
@@ -322,7 +322,7 @@ class shpLoader(BaseLoader):
         self._basename = basename
 
 
-    def load(self, url=None, filename=None, **kw):
+    def download(self, url=None, filename=None, **kw):
         '''Load xlsx from either url or file
         Assigns an ordered dict of dataframes to `self.dfs`
 
@@ -350,16 +350,15 @@ class shpLoader(BaseLoader):
         pass
 
 
-    def cload(self, *a, **kw):
+    def load(self, *a, **kw):
         '''Helper to load csv checking and saving to cache. See `from_csv`'''
-        return self.from_cache().load(*a, **kw)
+        return self.from_cache().download(*a, **kw)
 
 
 
 
 
 if __name__ == '__main__':
-
     
     if sys.argv[1] == 'list':
         def disp_cache_list(dl, subdir=''):
@@ -384,40 +383,40 @@ if __name__ == '__main__':
         print('Testing shapefile...')
         dl = shpLoader(
             url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
-        ).from_cache().load()
+        ).from_cache().download()
 
         print(dl.has_df())
 
         print('Testing zipped csv...')
         dl = csvLoader(
             url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv'
-        ).from_cache().load(is_zip=True, skiprows=3).save_cache()
+        ).from_cache().download(is_zip=True, skiprows=3).save_cache()
 
         print(dl.has_df())
 
         print('Testing csv...')
         dl = csvLoader(
             url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv'
-        ).from_cache().load().save_cache()
+        ).from_cache().download().save_cache()
 
         print(dl.has_df())
 
         print('Testing csv (custom filename)...')
         dl = csvLoader(
             url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv', filename='asdfasdfdata-pvLFI.csv'
-        ).cload()
+        ).load()
 
         print(dl.has_df())
 
         print('Testing local zipped csv...')
-        dl = csvLoader(filename='balhah.csv').from_cache().load(
+        dl = csvLoader(filename='balhah.csv').from_cache().download(
             'World firearms murders and ownership - Sheet 1.zip', is_zip=True
         ).save_cache()
 
         print(dl.has_df())
 
         print('Testing xlsx...')
-        dl = xlsxLoader(filename='vlah.xlsx').from_cache().load(
+        dl = xlsxLoader(filename='vlah.xlsx').from_cache().download(
             'Team assignments and Weekly Innovation Update group (1).xlsx'
         ).save_cache()
 
