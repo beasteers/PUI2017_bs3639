@@ -18,6 +18,56 @@ except ImportError:
     import urllib.request as urllib
 
 
+
+'''
+
+# Usage
+
+## CSV
+df = csvLoader.load(
+    url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', 
+    filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv', is_zip=True, skiprows=3
+).df
+
+
+## Excel
+dl = xlsxLoader.load(
+    url='Team assignments and Weekly Innovation Update group (1).xlsx', filename='vlah.xlsx'
+).save_cache()
+
+
+## Shapefile
+df = shpLoader.load(
+    url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
+).df
+
+>Note: shpLoader doesn't have a save method because I haven't implemented saving a shapefile from a dataframe (I'm sure it's pretty simple), 
+so calling save_cache() doesn't currently do anything. The file is still saved to cache as geopandas (or fiona) needs to load from a file
+via a passed filename, not a file-like object.
+
+
+
+# Alternative Syntax
+
+### This is identical to the first csv example.
+df = csvLoader(filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv').from_cache().download(
+    'http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', is_zip=True
+).save_cache().df
+
+### This syntax makes it more extensible. For example, you could check the cache, download if it's not there, but not save it, you could do:
+df = csvLoader(filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv').from_cache().download(
+    'http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', is_zip=True
+).df
+
+### To download the data from source everytime, just do:
+df = csvLoader(filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv').download(
+    'http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', is_zip=True
+).df
+
+'''
+
+
+
 '''
 TODO:
     Shapefile save
@@ -104,9 +154,14 @@ class BaseLoader(object):
 
 
 
-    def load(self, *a, **kw):
+    def cached_load(self, *a, **kw):
         '''Helper to load csv checking and saving to cache. See `from_csv`'''
         return self.from_cache().download(*a, **kw).save_cache()
+
+    @classmethod
+    def load(cls, filename=None, url=None, *a, **kw):
+        '''Factory method'''
+        return cls(filename, url).cached_load(*a, **kw)
 
 
 
@@ -350,7 +405,7 @@ class shpLoader(BaseLoader):
         pass
 
 
-    def load(self, *a, **kw):
+    def cached_load(self, *a, **kw):
         '''Helper to load csv checking and saving to cache. See `from_csv`'''
         return self.from_cache().download(*a, **kw)
 
@@ -381,9 +436,9 @@ if __name__ == '__main__':
         BaseLoader.default_dir = './data' # save to data folder
 
         print('Testing shapefile...')
-        dl = shpLoader(
+        dl = shpLoader.load(
             url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
-        ).from_cache().download()
+        )
 
         print(dl.has_df())
 
@@ -391,6 +446,14 @@ if __name__ == '__main__':
         dl = csvLoader(
             url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv'
         ).from_cache().download(is_zip=True, skiprows=3).save_cache()
+
+        print(dl.has_df())
+
+        print('Testing zipped csv preferred syntax...')
+        dl = csvLoader.load(
+            url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', 
+            filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv', is_zip=True, skiprows=3
+        )
 
         print(dl.has_df())
 
@@ -402,9 +465,9 @@ if __name__ == '__main__':
         print(dl.has_df())
 
         print('Testing csv (custom filename)...')
-        dl = csvLoader(
+        dl = csvLoader().cached_load(
             url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv', filename='asdfasdfdata-pvLFI.csv'
-        ).load()
+        )
 
         print(dl.has_df())
 
