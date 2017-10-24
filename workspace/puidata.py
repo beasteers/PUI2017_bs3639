@@ -381,6 +381,7 @@ class shpLoader(BaseLoader):
 
     @property
     def basename(self):
+        '''Basically the folder that the zip contents are stored to. Defaults to zipfile name.'''
         return self._basename or (os.path.splitext(os.path.basename(self.url))[0] if self.url else '')
 
     @basename.setter
@@ -421,10 +422,12 @@ class shpLoader(BaseLoader):
         '''Helper to load csv checking and saving to cache. See `from_csv`'''
         return self.from_cache().download(*a, **kw)
 
+
 # Only have shapefiles defined if geopandas is loaded.
 if 'geopandas' not in sys.modules:
-    class shpLoader(BaseLoader):
+    class shpLoader(shpLoader):
         def __init__(self, *a, **kw):
+			# Prevent a shpLoader instance from being instantiated
             raise ImportError('shpLoader depends on geopandas, which encountered an error on import.')
 
 
@@ -452,13 +455,15 @@ if __name__ == '__main__':
         BaseLoader.envvar = 'adkfasdkjfhkdsjfhasfasfdasdf44444' # force to go into current directory (unless you have a variable named this...)
         BaseLoader.default_dir = './data' # save to data folder
 
-        if 'geopandas' in sys.modules:
+        try:
             print('Testing shapefile...')
             dl = shpLoader.load(
                 url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
             )
 
             print(dl.has_df())
+        except ImportError:
+            print("Couldn't test shpLoader as geopandas is not installed.")
 
         print('Testing zipped csv...')
         dl = csvLoader(
