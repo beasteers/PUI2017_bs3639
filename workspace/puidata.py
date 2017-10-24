@@ -452,12 +452,13 @@ if __name__ == '__main__':
         BaseLoader.envvar = 'adkfasdkjfhkdsjfhasfasfdasdf44444' # force to go into current directory (unless you have a variable named this...)
         BaseLoader.default_dir = './data' # save to data folder
 
-        print('Testing shapefile...')
-        dl = shpLoader.load(
-            url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
-        )
+        if 'geopandas' in sys.modules:
+            print('Testing shapefile...')
+            dl = shpLoader.load(
+                url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
+            )
 
-        print(dl.has_df())
+            print(dl.has_df())
 
         print('Testing zipped csv...')
         dl = csvLoader(
