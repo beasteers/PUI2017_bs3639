@@ -6,7 +6,10 @@ import glob
 import zipfile
 
 import pandas as pd
-import geopandas as gpd
+try:
+	import geopandas as gpd
+except:
+	print("Geopandas can't be loaded. shpLoader is not available.")
 
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict as odict
@@ -25,7 +28,7 @@ except ImportError:
 
 ## CSV
 df = csvLoader.load(
-    url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', 
+    url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv',
     filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv', is_zip=True, skiprows=3
 ).df
 
@@ -41,7 +44,7 @@ df = shpLoader.load(
     url='https://www1.nyc.gov/assets/planning/download/zip/data-maps/open-data/mn_mappluto_16v2.zip', filename='MNMapPLUTO.shp'
 ).df
 
->Note: shpLoader doesn't have a save method because I haven't implemented saving a shapefile from a dataframe (I'm sure it's pretty simple), 
+>Note: shpLoader doesn't have a save method because I haven't implemented saving a shapefile from a dataframe (I'm sure it's pretty simple),
 so calling save_cache() doesn't currently do anything. The file is still saved to cache as geopandas (or fiona) needs to load from a file
 via a passed filename, not a file-like object.
 
@@ -101,7 +104,7 @@ class BaseLoader(object):
         self.url = url
         self.filename = filename
         self.directory = os.getenv(self.envvar, self.default_dir)
-        if not filename and url: 
+        if not filename and url:
             parts = os.path.splitext(os.path.basename(url))
             self.extension = self.extension or parts[1]
             self.filename = parts[0] + self.extension
@@ -139,10 +142,10 @@ class BaseLoader(object):
 
     def save_cache(self, filename=None, overwrite=False, **kw):
         '''save file to PUIDATA directory
-        
+
         Arguments:
             filename (str): The filename to look for in the data directory.
-            overwrite (bool): Whether or not to save if it already exists. 
+            overwrite (bool): Whether or not to save if it already exists.
             **kw: arguments to pass to the read function. For csv this is `read_csv`, for xlsx, `pd.read_excel`, etc.
         Returns self (chainable)
         '''
@@ -166,7 +169,7 @@ class BaseLoader(object):
 
 
     # Caching
-        
+
     def local_file(self, filename=''):
         '''Get the path for a cached file'''
         return os.path.join(self.directory, filename or self.filename or '')
@@ -235,12 +238,19 @@ class BaseLoader(object):
 
     @classmethod
     def list_cache(cls, subdir='', ext=None, full_path=False):
+        '''Lists files in cache. i.e. lists PUIDATA directory'''
         directory = os.getenv(cls.envvar, cls.default_dir)
         files = glob.glob(os.path.join(
             directory, subdir or '', '*' + (ext if ext is not None else cls.extension)
         ))
         return files if full_path else [os.path.relpath(f, directory) for f in files]
 
+    def __str__(self):
+        return '<{} ({}) from {}. Access df via loader.df or dfs via loader.dfs.'.format(
+            self.__class__.__name__,
+            self.filename or '-na-',
+            self.url or '-na-',
+        )
 
 
 
@@ -273,7 +283,7 @@ class csvLoader(BaseLoader):
 
         Arguments:
             url (str): The url to get the csv from. Can be remote or local
-            filename (str): The filename to get from the zip file. If a previous filename was not specified, 
+            filename (str): The filename to get from the zip file. If a previous filename was not specified,
                 it will be used for saving the cache file too.
             is_zip (bool): Whether the file is in a zip archive
             ith (int): If a filename is not specified and it's a zip archive, the `ith` file will be selected from the archive.
@@ -314,7 +324,7 @@ class xlsxLoader(BaseLoader):
 
         Arguments:
             url (str): The url to get the csv from. Can be remote or local
-            filename (str): The filename to get from the zip file. If a previous filename was not specified, 
+            filename (str): The filename to get from the zip file. If a previous filename was not specified,
                 it will be used for saving the cache file too.
             is_zip (bool): Whether the file is in a zip archive
             ith (int): If a filename is not specified and it's a zip archive, the `ith` file will be selected from the archive.
@@ -331,7 +341,7 @@ class xlsxLoader(BaseLoader):
         return self
 
     def load_sheet(self, sheet, *a, **kw):
-        ''''''
+        '''Helper function to load a specific sheet from an excel file'''
         self.sheet_name = sheet
         self.download(*a, **kw)
         if self.dfs.get(sheet):
@@ -339,12 +349,13 @@ class xlsxLoader(BaseLoader):
         return self
 
     def read(self, file, sheets=None, **kw):
+        '''Read xlsx file'''
         reader = pd.ExcelFile(file)
         sheets = sheets or self.sheets or reader.sheet_names
         self.dfs = odict([(sh, pd.read_excel(reader, sheetname=sh, **kw)) for sh in sheets])
 
     def save(self, file, **kw):
-        # Write xlsx file
+        '''Write xlsx file'''
         writer = pd.ExcelWriter(file)
         for name, df in self.dfs.items():
             df.to_excel(writer, name, index=False, **kw)
@@ -359,7 +370,7 @@ class shpLoader(BaseLoader):
     def __init__(self, filename=None, url=None, basename=None):
         BaseLoader.__init__(self, filename, url)
         self.basename = basename
-        
+
     @property
     def filename(self): # Get filename with the zip archive name as the directory
         return os.path.join(self.basename, self._filename)
@@ -383,8 +394,8 @@ class shpLoader(BaseLoader):
 
         Arguments:
             url (str): The url to get the csv from. Can be remote or local
-            filename (str): The filename to get from the zip file. If a previous filename was not specified, 
-                it will be used for saving the cache file too. The file will be stored in 
+            filename (str): The filename to get from the zip file. If a previous filename was not specified,
+                it will be used for saving the cache file too. The file will be stored in
             **kw: Arguments to pass to `pd.read_csv`
 
         Returns self (chainable)
@@ -398,10 +409,11 @@ class shpLoader(BaseLoader):
         return self
 
     def read(self, file, **kw):
+        '''Load from file-like object'''
         self.df = gpd.GeoDataFrame.from_file(file, **kw)
 
     def save(self, file, **kw):
-        '''asdfkasjfklsajfkljsalkjaslfkjsakldf'''
+        '''Haven't implemented because downloading saves to cache already.'''
         pass
 
 
@@ -409,16 +421,21 @@ class shpLoader(BaseLoader):
         '''Helper to load csv checking and saving to cache. See `from_csv`'''
         return self.from_cache().download(*a, **kw)
 
+# Only have shapefiles defined if geopandas is loaded.
+if 'geopandas' not in sys.modules:
+    class shpLoader(BaseLoader):
+        def __init__(self, *a, **kw):
+            raise ImportError('shpLoader depends on geopandas, which encountered an error on import.')
 
 
 
 
 if __name__ == '__main__':
-    
+
     if sys.argv[1] == 'list':
         def disp_cache_list(dl, subdir=''):
             print('{}: {}'.format(dl.extension, os.path.join(subdir or '', '*' + dl.extension)))
-            for f in dl.list_cache(subdir): 
+            for f in dl.list_cache(subdir):
                 print('  ', f)
 
         disp_cache_list(csvLoader)
@@ -451,7 +468,7 @@ if __name__ == '__main__':
 
         print('Testing zipped csv preferred syntax...')
         dl = csvLoader.load(
-            url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv', 
+            url='http://api.worldbank.org/v2/en/indicator/SP.POP.TOTL?downloadformat=csv',
             filename='API_SP.POP.TOTL_DS2_en_csv_v2.csv', is_zip=True, skiprows=3
         )
 
@@ -484,4 +501,3 @@ if __name__ == '__main__':
         ).save_cache()
 
         print(dl.has_df())
-
