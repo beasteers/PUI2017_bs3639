@@ -93,7 +93,7 @@ class BaseLoader(object):
     extension = ''
     directory = os.getenv(envvar, default_dir)
 
-    def __init__(self, filename=None, url=None):
+    def __init__(self, filename=None, url=None, df=None):
         '''
         Arguments:
             url (str, optional): The url to pull from. Can be specified in later.
@@ -102,6 +102,7 @@ class BaseLoader(object):
         '''
         self.clear()
         self.url = url
+		self.set_df(df)
         self.filename = filename
         self.directory = os.getenv(self.envvar, self.default_dir)
         if not filename and url:
@@ -217,24 +218,37 @@ class BaseLoader(object):
             socket = self.open_file(url, as_b=as_b)
         return socket
 
+
+
+    # DataFrame getters/setters - for convenience
+
+    def has_df(self):
+        '''Whether or not there is a df or a list of dfs available'''
+        return len(self.dfs) or self.df is not None
+
+    def get_df(self):
+        '''Get df or multiple dfs'''
+        if self.df is not None:
+            return self.df
+        elif len(self.dfs):
+            return self.dfs
+        return None
+
+    def set_df(self, df):
+        '''Assign df or multiple dfs'''
+        if isinstance(df, pd.DataFrame):
+            self.df = df
+        elif hasattr(df, '__getitem__'):
+            self.dfs = df # Assumed to be an ordered dict, dict, or list.
+        return self
+
+
     def ensure_directory(self, filename=None):
         '''Helper to create a directory if it doesn't already exist'''
         outdir = os.path.dirname(self.local_file(filename))
         if outdir and not os.path.isdir(outdir):
             os.mkdir(outdir)
 
-
-    def has_df(self):
-        '''Whether or not there is a df or a list of dfs available'''
-        return len(self.dfs) or self.df is not None
-
-    def set_df(self, df):
-        '''Assign df or multiple dfs'''
-        if isinstance(df, pd.DataFrame):
-            self.df = df
-        else: # Assumed to be an ordered dict, dict, or list. TODO: add check
-            self.dfs = df
-        return self
 
     @classmethod
     def list_cache(cls, subdir='', ext=None, full_path=False):
@@ -246,7 +260,7 @@ class BaseLoader(object):
         return files if full_path else [os.path.relpath(f, directory) for f in files]
 
     def __str__(self):
-        return '<{} ({}) from {}. Access df via loader.df or dfs via loader.dfs.'.format(
+        return '<{} ({}) from {}. Note: access df via loader.df or dfs via loader.dfs.>'.format(
             self.__class__.__name__,
             self.filename or '-na-',
             self.url or '-na-',
@@ -414,8 +428,8 @@ class shpLoader(BaseLoader):
         self.df = gpd.GeoDataFrame.from_file(file, **kw)
 
     def save(self, file, **kw):
-        '''Haven't implemented because downloading saves to cache already.'''
-        pass
+        '''Simplistic implementation. There could be errors with CRS and I'm not sure how it works with the auxilliary shapefile data (.dbf, .prj, .shx, ...).'''
+        self.df.to_file(file, driver='ESRI Shapefile')
 
 
     def cached_load(self, *a, **kw):
