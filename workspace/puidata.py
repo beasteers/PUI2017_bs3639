@@ -22,7 +22,79 @@ except ImportError:
 
 '''
 
+PUI Data
+################
+These classes handle the downloading and caching of data to your $PUIDATA
+directory. The data will be downloaded if it doesn't already exist in your PUIDATA
+directory.
+
+Current Supported File Types:
+* csv
+* Excel
+* Shapefile
+* *custom*
+
+They all can handle being extracted from a zip archive, as well as loading from
+either web urls or the local disk.
+
 # Usage
+There are several ways of calling the loaders.
+
+# The main way:
+df = csvLoader.load(url=url, filename=fn).df
+
+# equivalent to:
+df = csvLoader(url=url, filename=fn).from_cache().download(**kw).save_cache().df
+
+This is the recommended way. the filename is specified in initialization so it
+is available when looking in the cache.
+
+Looking at another case that the first case can't handle. Say you need to download
+a zip archive with a file named something weird and you want to save it with a
+nicer name in your PUIDATA directory, you could use the loader like so:
+
+df = csvLoader(filename='citibike-data.csv').cached_load(
+    url='www.website.com/data.zip', filename='aksdjfkdlaj.csv', is_zip=True
+).df
+
+# equivalent to:
+df = csvLoader(filename='citibike-data.csv').from_cache().download(
+    url='www.website.com/data.zip', filename='aksdjfkdlaj.csv', is_zip=True
+).save_cache().df
+
+The problem here is that when calling cached_load, you need to specify the filename
+in initialization because the filename is not defined before checking the cache.
+The filename is only passed to the download function. The following identical classes
+will **not** be able to find the file in the cache:
+
+df = csvLoader().cached_load(
+    url=url, filename=fn, is_zip=True
+).df
+
+# equivalent to:
+df = csvLoader().from_cache().download(url=url, filename=fn, **kw).save_cache().df
+
+
+To download a file from a zip file, just pass is_zip to the download argument.
+The file will be selected by the filename that is either given to the function
+or was set previously (in initialization for example). If the filename does not
+exist in the file, there is an optional argument `ith` that specifies that the
+ith file should be used from the zip archive. The file will then be saved under
+the filename that was provided.
+
+df = csvLoader.load(url=url, filename=fn, is_zip=True, ith=0).df
+
+Any extra arguments that get passed to the download function (as well as the
+from_cache and save_cache) get passed to the read function. So for example with
+csv's, I can do this:
+
+df = csvLoader.load(
+    url=url, filename=fn, skiprows=3, index_col=False
+).df
+
+Both skiprows and index_col are sent to `pd.read_csv( ..., skiprows=3, index_col=False )`.
+
+# Basic Examples
 
 ## CSV
 df = csvLoader.load(
@@ -32,10 +104,15 @@ df = csvLoader.load(
 
 
 ## Excel
-dl = xlsxLoader.load(
+# All sheets as an OrderedDict
+dfs = xlsxLoader.load(
     url='Team assignments and Weekly Innovation Update group (1).xlsx', filename='vlah.xlsx'
-).save_cache()
+).dfs
 
+# Single sheet
+df = xlsxLoader.load_sheet(
+    url='Team assignments and Weekly Innovation Update group (1).xlsx', sheet='Sheet1'
+).df
 
 ## Shapefile
 df = shpLoader.load(
@@ -43,20 +120,51 @@ df = shpLoader.load(
 ).df
 
 ## Custom Loader
+This class was honestly me just panicking before the exam that federica would
+put some weird data format on the midterm, so I made a general purpose class
+that exposes the file object before it gets passed to the pd.read_* function.
+There aren't many use cases for this, but it's a quick and dirty way to access
+the downloaded file object before it gets saved to cache. Note: this function
+is only called the first time. The csv is saved to disk with these changes
+already made.
+
+Examples help. Let's assume that the csv file (see url below) is actually a
+tsv (tab \t separator). FYI, I'm only using tsv's as an example. This is not
+the proper way to load a tsv. I will show the preferred way below
 
 @customLoader.parser
 def loader(file):
-    text = file.read().decode('utf-8')
     # Can return:
-    #    string - is read by pd.read_csv( ... )
-    #    file-like - also fed to pd.read_csv( ... )
+    #    file-like - fed to pd.read_csv( ... )
+    #    string - is read by pd.read_csv(io.StringIO( ... ))
     #    list/dict/odict - gets fed to pd.DataFrame( ... )
     #    dataframe - taken as is
-    return file
+
+    return file # file-like
+
+    text = file.read().decode('utf-8')
+    return text # string
+
+    lines = text.split('\n')
+    table = [line.split('\t') for line in lines]
+    return table # list
+
+    dict_table = {t[0]: t[1:] for t in zip(*table)}
+    return dict_table # dict
+
+    df = pd.DataFrame(dict_table) # both equivalent
+    df = pd.DataFrame(table[1:], columns=table[1])
+    return df # dataframe
 
 # function works the same way as csvLoader.load( ... )
 df = loader(
     url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv'
+).df
+
+## The Proper way to load a .tsv
+df = csvLoader.load(
+    url='https://github.com/bensteers/PUI2017_bs3639/raw/master/HW5_bs3639/data-pvLFI.csv',
+    filename='data-pvLFI.csv', sep='\t' #**
 ).df
 
 # Alternative Syntax
@@ -177,7 +285,9 @@ class BaseLoader(object):
             **kw: arguments to pass to the read function. For csv this is `read_csv`, for xlsx, `pd.read_excel`, etc.
         Returns self (chainable)
         '''
-        if (overwrite or not self.is_cached()) and self.has_df():
+        if self.has_df():
+            print('df is None')
+        elif overwrite or not self.is_cached():
             print('Saving to cache:', self.local_file(filename or self.filename))
             BaseLoader.ensure_directory(self, self.local_file())
             self.save(self.local_file(filename or self.filename), **kw)
@@ -197,6 +307,7 @@ class BaseLoader(object):
         df = csvLoader.load(url='http://website.com/data.csv').df
         # cached as data.csv
         '''
+        assert url or filename, ('please specify url and/or filename')
         return clas(filename=filename, url=url)(*a, **kw)
 
     def __call__(self, filename=None, url=None, *a, **kw):
@@ -482,7 +593,7 @@ class shpLoader(BaseLoader):
         super(shpLoader, self).__init__(*a, **kw)
 
 
-    def download(self, url=None, filename=None, **kw):
+    def download(self, url=None, filename=None, is_zip=True, **kw):
         '''Load xlsx from either url or file
         Assigns an ordered dict of dataframes to `self.dfs`
 
@@ -497,8 +608,13 @@ class shpLoader(BaseLoader):
         if self.has_df(): # return from cache if it exists
             return self
 
-        z = self.open_zip(url)
-        z.extractall(self.local_file())
+        if is_zip:
+            z = self.open_zip(url)
+            z.extractall(self.local_file())
+        else:
+            socket = self.open_socket(url, filename, is_zip=is_zip, ith=ith, as_b=True)
+            with open(self.local_file(filename or self.filename), 'r') as f:
+                f.write(socket.read())
         self.read(self.local_file(filename or self.filename), **kw)
         return self
 
@@ -522,6 +638,7 @@ class shpLoader(BaseLoader):
         self.basename = self.basename or (
             os.path.splitext(os.path.basename(self.url))[0] if self.url else '')
         return self
+
 
 
 
