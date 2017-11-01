@@ -18,3 +18,5 @@ As the problems deals with two varibales (time and user type) and one of the var
 ### Additional Comments
 
 Based on the data, I would rather choose monthly data than weekly data. The reason being, the data for user type 'Customer' is quite small when a small time span of week is considered. The longer duration would have showed the effects of the problem in a more broader way.
+
+# FBB ok, this should have been uplaoded to HW3, where the original proposal was
