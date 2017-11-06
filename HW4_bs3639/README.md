@@ -13,6 +13,7 @@ Analyse 3 statistical tests from articles found in [PLOS ONE](http://journals.pl
 Logistic Regression |AUC|1, continuous|various classifiers|5, categorical|||Does their predictor predict cases of Leukemia better than existing classifiers|AUC of AML positive = AUC of healthy|0.05| [Leukemia Prediction Using Sparse Logistic Regression](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0072932)|
 
 
+# FBB ok
 
 ## Assignment 3: Reproduce the analysis of the Hard to Employ program in NY.
 Reproduce the analysis of the Hard to Employ programs for NY. I worked alone on this assignment.
