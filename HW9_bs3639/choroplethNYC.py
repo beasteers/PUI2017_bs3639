@@ -36,7 +36,7 @@ def discrete_cmap(N, base_cmap=None):
 
 def choroplethNYC(df, column=None, cmap='viridis', ax=None,
                   cb=True, kind='continuous', alpha=1, color=None, edgecolor=None,
-                  scheme=None, k=10, spacing=False, lw=1, width=None, side=False):
+                  scheme=None, k=10, spacing=False, lw=1, width=None, side=False, **kw):
     '''creates a choroplath from a dataframe column - NYC tuned
     Arguments:
     df : a GeoDataFrame
@@ -55,13 +55,13 @@ def choroplethNYC(df, column=None, cmap='viridis', ax=None,
         ax = pl.figure(figsize=(10, 10)).add_subplot(111)
     if column == None:
         if color == None:
-            ax = df.plot(cmap=cmap, alpha=alpha, ax=ax, linewidth=lw)
+            ax = df.plot(cmap=cmap, alpha=alpha, ax=ax, linewidth=lw, **kw)
         else:
-            ax = df.plot(alpha=alpha, ax=ax, linewidth=lw, color=color, edgecolor=edgecolor)
+            ax = df.plot(alpha=alpha, ax=ax, linewidth=lw, color=color, edgecolor=edgecolor, **kw)
     elif not scheme == None:
         ax = df.plot(column=column, edgecolor=edgecolor,
                      cmap=cmap, alpha=alpha, ax=ax,
-                     linewidth=lw, scheme=scheme, k=k, legend=True)
+                     linewidth=lw, scheme=scheme, k=k, legend=True, **kw)
  
         pl.legend(loc=2)
         ax.axis('off')
@@ -81,7 +81,7 @@ def choroplethNYC(df, column=None, cmap='viridis', ax=None,
       
         ax = df.dropna(subset=[column]).plot(column=column, edgecolor=edgecolor,
                                              cmap=cmap, alpha=alpha, ax=ax,
-                                             linewidth=lw)
+                                             linewidth=lw, **kw)
 
         vmin, vmax = min(df[column].values), max(df[column].values)
     ax.axis('off')
