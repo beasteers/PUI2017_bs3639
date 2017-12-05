@@ -20,3 +20,14 @@ The color choices are good and represent conventionally used color codes for qua
 The plot gives an honest representation of the data that it says it is showing, but I think clarity would be improved using a normalized plot, as I can't really tell if the plot is saying that there are a higher proportion of trees in poor health at higher diameters. It is something that I would assume, but I can't really discern that from the plot. 
 
 Good job Matt!
+
+# FBB the plot is missing
+the link is broken because you did not upload the plot to the repo, and I asked to actually display the plot in your MD file
+
+**esthetics**: 
+Whihle green/red/yellow are typical colors or good-badscales and here they also evoke tree colors the are not color blind compliant in addition the labels are small, which is not justified given the large amount of empty space
+
+thoughful comments
+
+9/10
+
