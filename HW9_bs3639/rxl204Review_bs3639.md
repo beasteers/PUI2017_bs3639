@@ -29,3 +29,10 @@ The only misleading part of this plot is that it uses absolute counts of trees, 
 
 
 Good job Rachel! :D
+
+# FBB 
+the link is broken because you did not upload the plot to your repo and I asked for the plot to be displayed in the markdown. 
+
+(Since the comments are very thoughtful and you onviously took this seriously I will let it slide on this plot, but I took points off in the other plot review - but read the instructions carefully! providing the correct deliverable according to instructions is part of the exercise)
+
+10/10
